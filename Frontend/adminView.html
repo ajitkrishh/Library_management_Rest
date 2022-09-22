@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management System</title>
+
+    <script src="utils/jquery.js"></script>
+    <link rel="stylesheet" href="utils/bootstrap.css">
+    <script src="utils/bootstrap.js"></script>
+
+</head>
+
+<body>
+
+
+
+
+    <div class="container m-5">
+        <div class="row">
+            <div class="col-sm-1">
+                <div class="text-center " style="margin-top: 50%; margin-left: -20%;">
+                    <button id="changeToadmin" class="btn btn-info">changeuser</button>
+                </div>
+            </div>
+            <div class="col-sm-9">
+                <h2 class="text-center alert alert-danger">
+                    Library Management System
+                </h2>
+
+            </div>
+            <div class="col-sm-1">
+                <div class="text-center " style="margin-top: 50%;">
+                    <button class="btn btn-info" id="user"></button>
+                </div>
+            </div>
+            <div class="col-sm-1">
+                <div class="text-center " style="margin-top: 50%;">
+                    <button class="btn btn-danger" id="logout">Logout</button>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-4">
+                <h4 class="text-center alert alert-info">Add/ Update Book records</h4>
+
+                <div class="form">
+                    Name : <input class="form-control" type="text" id="BookName" value="Book" name="BookName">
+                    Author : <input class="form-control" type="text" id="AuthorName" value="Author" name="AuthorName">
+                    Discription : <input class="form-control" type="text" id="Discription" value="Discription"
+                        name="Discription">
+                </div>
+                <div class="mt-5">
+                    <button id="post" class="btn btn-success" style="margin-top:10px ;">Add</button>
+                    <button id="put" class="btn btn-success" style="margin-top:10px ; display: none;">Update</button>
+                </div>
+
+            </div>
+
+            <div class="col-sm-8">
+                <h4 class="text-center alert alert-info">Available Book records</h4>
+                <div class="records">
+                    <table class="table table-hover">
+                        <tr>
+
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>Author</th>
+                            <th>Discription</th>
+                            <th>Edit</th>
+                            <th>Delete</th>
+                        </tr>
+                        <tbody id="tbody">
+
+                        </tbody>
+                    </table>
+
+
+                    </table>
+
+                </div>
+
+
+            </div>
+        </div>
+
+    </div>
+</body>
+
+<script>
+
+    const url = "http://127.0.0.1:5500/login.html";
+    const token = localStorage.getItem("token");
+    const type = localStorage.getItem("type");
+
+    if (type === '1') {
+        $('#user').text("Admin");
+
+
+        // logout code , here we flush out saved token from local storage
+        $("#logout").click(() => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("type");
+            localStorage.removeItem("id");
+            window.location = url;
+        });
+
+        $("#changeToadmin").click(() => {
+            window.location = "http://127.0.0.1:5500/changeToadmin.html";
+        });
+
+        //      fetching data from api async 
+        $.ajax({
+            url: "http://127.0.0.1:8000/api/admin/",
+            method: 'GET',
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Token " + token
+            },
+            dataType: 'json',
+            success: ((data) => {
+                fillTable(data);           // function for populating the table
+
+                $("#put").hide();         // there are two buttons whose visibilit toggles
+                $("#post").show();        // dependeing upon post or put request
+            }),
+            error: ((e) => {
+                alert(e.statusText);
+            })
+        });
+
+        let counter = 1;        // counter is use to maintain serial number of object in table
+
+        // function to populate the table body
+        function fillTable(data) {
+            let str = ""
+            for (let i = 0; i < data.length; i++) {
+                str += '<tr> <td class="counter">' + counter + '</td>   <td>' + data[i].Name + "</td>    <td>" + data[i].Author + "</td> <td>" + data[i].Discription + "</td>   <td><button class='btn btn-warning' id = " + data[i].id + " onclick = 'fillForm(this.id)'>edit</button></td>  <td><button class='btn btn-danger' id = " + data[i].id + " onclick = 'deleteData(this.id)'>Delete</button></td></tr>";
+                counter++;
+            }
+            $("#tbody").html(str);
+        }
+
+        // handling post request 
+
+        $("#post").click(() => {
+            let name, author, discription;
+            name = $("#BookName").val();
+            author = $("#AuthorName").val();
+            discription = $("#Discription").val();
+
+            if (name.length > 0 && author.length > 0 && discription.length > 0) {
+                $.ajax({
+                    url: "http://127.0.0.1:8000/api/admin/",
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Token " + token
+                    },
+                    data: JSON.stringify({ "Name": name, "Author": author, "Discription": discription }),
+                    dataType: 'json',
+                    success: ((data) => {
+                        let s = '<tr> <td class="counter">' + counter + '</td>   <td>' + data.Name + "</td>    <td>" + data.Author + "</td> <td>" + data.Discription + "</td>   <td><button class='btn btn-warning' id = " + data.id + " onclick = 'fillForm(this.id)'>edit</button></td>  <td><button class='btn btn-danger' id = " + data.id + " onclick = 'deleteData(this.id)'>Delete</button></td></tr>";
+                        counter++;
+                        let htmll = document.getElementById("tbody").innerHTML;
+                        htmll += s;
+                        $("#tbody").html(htmll);
+                    }),
+                    error: ((e) => {
+                        alert(e.statusText);
+                    })
+                });
+            }
+        });
+
+        // function to fill the form with previous data thus we can update it later
+        function fillForm(id) {
+            $("#put").show();
+            $("#post").hide();           // now we toggle the button as we have to update data
+            let element = document.getElementById(id);
+            let parent = element.closest("tr");
+            let name, author, discription;
+            name = parent.children[1].textContent;
+            author = parent.children[2].textContent;
+            discription = parent.children[3].textContent;
+            $("#BookName").val(name);
+            $("#AuthorName").val(author);
+            $("#Discription").val(discription);
+            putData(id);              // actual call to update data
+
+
+        }
+
+        function putData(id) {
+
+
+            $("#put").click(() => {
+                let name, author, discription;
+                name = $("#BookName").val();
+                author = $("#AuthorName").val();
+                discription = $("#Discription").val();
+
+                if (name.length > 0 && author.length > 0 && discription.length > 0) {
+                    $.ajax({
+                        url: "http://127.0.0.1:8000/api/admin/" + id + "/",
+                        method: 'PUT',
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "Token " + token
+                        },
+                        data: JSON.stringify({ "Name": name, "Author": author, "Discription": discription }),
+                        dataType: 'json',
+                        success: ((data) => {
+
+                            $("#put").hide();
+                            $("#post").show();
+                            // if data is successfully updated we toggle back the hide update button
+
+                            let element = document.getElementById(id);
+                            let parent = element.closest("tr");
+                            parent.children[1].textContent = data.Name;
+                            parent.children[2].textContent = data.Author;
+                            parent.children[3].textContent = data.Discription;
+
+                            $("#BookName").val("");
+                            $("#AuthorName").val("");
+                            $("#Discription").val("");
+
+                            rearrangeSerialNumber();    // after update we rearrange the serial number
+
+                        }),
+                        error: ((e) => {
+                            alert(e.statusText);  // if an error , we alert it
+                        })
+                    });
+                }
+            });
+        }
+
+        // function to delete data
+
+        function deleteData(id) {
+            let urll = "http://127.0.0.1:8000/api/admin/" + id + "/";
+            $.ajax({
+                url: urll,
+                method: 'DELETE',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Token " + token
+                },
+                success: ((data, txtStatus, jqXHR) => {
+                    // console.log(data, txtStatus, jqXHR.status)
+                    if (jqXHR.status === 204) {
+                        var selector = "#" + id;
+                        $(selector).closest('tr').remove();
+                        rearrangeSerialNumber();
+
+                    }
+
+                }),
+                error: ((e) => {
+                    alert(e.statusText);
+                })
+            });
+
+
+        }
+
+        // function for rearranging serial number
+        function rearrangeSerialNumber() {
+            counter = 1;
+
+            let cnt = document.getElementsByClassName("counter");
+            for (let i = 0; i < cnt.length; i++) {
+                cnt[i].innerHTML = counter;
+                counter++;
+            }
+        }
+    }
+    else {
+        window.location = "http://127.0.0.1:5500/login.html";
+    }
+
+
+</script>
+
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="utils/jquery.js"></script>
+    <link rel="stylesheet" href="utils/bootstrap.css">
+    <script src="utils/bootstrap.js"></script>
+
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center alert alert-danger">
+            Please Login to Enter 
+        </h2>
+
+    </div>
+    <div class="container" style="max-width: 70%; margin-top:2%">
+        Email : <input class="form-control" type="text" name="email" id="email" value = "a@b.com">
+        Password : <input class="form-control" type="password" name="password" id="password" value="123">
+        <button id="login" class="btn btn-success" style="margin-top:5px;">login</button>
+
+        <h6>Not registered? <a href="http://127.0.0.1:5500/register.html" class="btn btn-info">click here</a></h6>
+    </div>
+
+</body>
+<script>
+    const URL = "http://127.0.0.1:8000/login/";
+
+    if(localStorage.getItem("token") !== null) {
+        let UserType = localStorage.getItem("type");
+        if (UserType == '2'){
+            window.location = 'http://127.0.0.1:5500/studentview.html';
+        }
+        if (UserType == '1'){
+            window.location = 'http://127.0.0.1:5500/adminView.html';
+        }
+  }
+
+    $("#login").click(()=>{
+        let Email = $("#email").val();
+        let Password = $("#password").val();
+        console.log(Email + Password);
+        let Data = {username : Email , password: Password};
+        console.log(Data);
+        $.ajax({
+            url : URL,
+            method : "POST",
+            data :JSON.stringify(Data),
+            contentType:'application/json',
+            dataType:'json',
+            success: ((data) =>{
+                console.log(data);
+                localStorage.setItem("token" , String(data.token));
+                localStorage.setItem("type" , String(data.UserType));
+                localStorage.setItem("id" , String(data.user_id));
+                if (data.UserType === '2'){
+                    window.location = "http://127.0.0.1:5500/studentview.html";
+                }else if( data.UserType === '1'){
+                    window.location = "http://127.0.0.1:5500/adminView.html";
+                }
+            }),
+            error : ((e)=>{
+                alert("Something  went wrong \n" + e.statusText);
+            })
+        });
+    })  ;
+
+
+</script>
+</html>

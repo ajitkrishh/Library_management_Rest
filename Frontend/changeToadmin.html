@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management System</title>
+
+    <script src="utils/jquery.js"></script>
+    <link rel="stylesheet" href="utils/bootstrap.css">
+    <script src="utils/bootstrap.js"></script>
+
+</head>
+
+<body>
+
+    <div class="container m-5">
+        <div class="row">
+            <div class="col-sm-10">
+                <h2 class="text-center alert alert-danger">
+                    Promote User to Admin
+                </h2>
+
+            </div>
+            <div class="col-sm-1">
+                <div class="text-center " style="margin-top: 50%;">
+                    <button class="btn btn-info" id="user"></button>
+                </div>
+            </div>
+            <div class="col-sm-1">
+                <div class="text-center " style="margin-top: 50%;">
+                    <button class="btn btn-danger" id="logout">Logout</button>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-4">
+                <h4 class="text-center alert alert-info">Update User</h4>
+
+                <div class="form">
+                    FirstName : <input class="form-control" type="text" id="UserName" value="name" name="UserName">
+                    UserType : <input class="form-control" type="text" id="usertype" value="" name="usertype">
+                </div>
+                <div class="mt-5">
+                    <button id="put" class="btn btn-success" style="margin-top:10px ;">Update</button>
+                </div>
+
+            </div>
+
+            <div class="col-sm-8">
+                <h4 class="text-center alert alert-info">Available Users</h4>
+                <div class="records">
+                    <table class="table table-hover">
+                        <tr>
+
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>UserType</th>
+                            <th>Edit</th>
+                            <th>Delete</th>
+                        </tr>
+                        <tbody id="tbody">
+
+                        </tbody>
+                    </table>
+
+
+                    </table>
+
+                </div>
+
+
+            </div>
+        </div>
+
+    </div>
+</body>
+
+<script>
+
+    const url = "http://127.0.0.1:5500/login.html";
+    const token = localStorage.getItem("token");
+    const type = localStorage.getItem("type");
+
+    if (type === '1') {
+        $('#user').text("Admin");
+
+        // logout code , here we flush out saved token from local storage
+        $("#logout").click(() => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("type");
+            localStorage.removeItem("id");
+            window.location = url;
+        });
+
+        //      fetching data from api async 
+
+        $.ajax({
+            url: "http://127.0.0.1:8000/api/user/",
+            method: 'GET',
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Token " + token
+            },
+            dataType: 'json',
+            success: ((data) => {
+                fillTable(data);           // function for populating the table
+            }),
+            error: ((e) => {
+                alert(e.statusText);
+            })
+        });
+
+        let counter = 1;        // counter is use to maintain serial number of object in table
+
+        // function to populate the table body
+        function fillTable(data) {
+            let str = ""
+            for (let i = 0; i < data.length; i++) {
+                let role, bs_class;
+                console.log(data[i]);
+                if (data[i].UserType == '1') {
+                    role = "Admin";
+                    bs_class = "'btn btn-success'";
+                } else if (data[i].UserType == '2') {
+                    role = "Student";
+                    bs_class = "'btn btn-primary'";
+                }
+                str += '<tr> <td class="counter">' + counter + '</td>   <td>' + data[i].first_name + "</td>    <td>" + data[i].email + "</td> <td><button class = " + bs_class + ">" + role + "</button></td> <td><button class='btn btn-warning' id = " + data[i].id + " onclick = 'fillForm(this.id)'>edit</button></td>  <td><button class='btn btn-danger' id = " + data[i].id + " onclick = 'deleteData(this.id)'>Delete</button></td></tr>";
+                counter++;
+            }
+            $("#tbody").html(str);
+        }
+
+        // function to fill the form with previous data thus we can update it later
+        function fillForm(id) {
+            let element = document.getElementById(id);
+            let parent = element.closest("tr");
+            let name, usertype;
+            name = parent.children[1].textContent;
+            usertype = parent.children[3].firstChild.textContent;
+            $("#UserName").val(name);
+            $("#usertype").val(usertype);
+            putData(id);
+            console.log(id);
+            // actual call to update data
+
+
+        }
+
+        function putData(id) {
+
+
+            $("#put").click(() => {
+                let name, type;
+                name = $("#UserName").val();
+                type = $("#usertype").val();
+                if (type == "Admin") {
+                    type = "1";
+                } else if (type = "Student") {
+                    type = "2";
+                }
+                console.log(name, type , id);
+
+                if (name.length > 0 && type.length > 0) {
+                    $.ajax({
+                        url: "http://127.0.0.1:8000/api/user/" + id + "/",
+                        method: 'PATCH',
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "Token " + token
+                        },
+                        data: JSON.stringify({ "first_name": name, "UserType": [type] }),
+                        dataType: 'json',
+                        success: ((data) => {
+                            // if data is successfully updated we toggle back the hide update button
+
+                            let element = document.getElementById(id);
+                            let parent = element.closest("tr");
+                            let role, bs_class;
+                            console.log(parent);
+                            if (data.UserType == '1') {
+                                bs_class = "'btn btn-success'";
+                                role = "Admin";
+                            } else if (data.UserType == '2') {
+                                role = "Student";
+                                bs_class = "'btn btn-primary'";
+                            }
+                            parent.children[1].textContent = data.first_name;
+                            // parent.children[3].firstChild.textContent = "<button class =" + bs_class + ">" + role + "</button>";
+                            parent.children[3].innerHTML = "<button class =" + bs_class + ">" + role + "</button>";
+
+                            $("#UserName").val("");
+                            $("#usertype").val("");
+
+                            rearrangeSerialNumber();    // after update we rearrange the serial number
+
+                        }),
+                        error: ((e) => {
+                            console.log(e.statusText);  // if an error , we alert it
+                        })
+                    });
+                }
+            });
+        }
+
+        // function to delete data
+
+        function deleteData(id) {
+            let urll = "http://127.0.0.1:8000/api/user/" + id + "/";
+            $.ajax({
+                url: urll,
+                method: 'DELETE',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Token " + token
+                },
+                success: ((data, txtStatus, jqXHR) => {
+                    // console.log(data, txtStatus, jqXHR.status)
+                    if (jqXHR.status === 204) {
+                        var selector = "#" + id;
+                        $(selector).closest('tr').remove();
+                        rearrangeSerialNumber();
+
+                    }
+
+                }),
+                error: ((e) => {
+                    alert(e.statusText);
+                })
+            });
+
+
+        }
+
+        // function for rearranging serial number
+        function rearrangeSerialNumber() {
+            counter = 1;
+
+            let cnt = document.getElementsByClassName("counter");
+            for (let i = 0; i < cnt.length; i++) {
+                cnt[i].innerHTML = counter;
+                counter++;
+            }
+        }
+    }
+    else {
+        window.location = "http://127.0.0.1:5500/login.html";
+    }
+
+
+</script>
+
+</html>

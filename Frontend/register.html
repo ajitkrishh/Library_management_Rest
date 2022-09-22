@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="utils/jquery.js"></script>
+    <link rel="stylesheet" href="utils/bootstrap.css">
+    <script src="utils/bootstrap.js"></script>
+
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center alert alert-danger">
+            Please Register Here 
+        </h2>
+
+    </div>
+    <div class="container" style="max-width: 70%; margin-top:2%">
+        Email : <input class="form-control" type="text" name="email" id="email" value = "aa@bb.cc">
+        Password : <input class="form-control" type="password" name="password" id="password" value="123">
+        <button id="register" class="btn btn-success" style="margin-top:5px;">Register</button>
+
+    </div>
+
+</body>
+<script>
+    const URL = "http://127.0.0.1:8000/api/user/";
+
+    if(localStorage.getItem("token") !== null) {
+        let UserType = localStorage.getItem("type");
+        if (UserType == '2'){
+            window.location = 'http://127.0.0.1:5500/studentview.html';
+        }
+        else if (UserType == '1'){
+            window.location = 'http://127.0.0.1:5500/adminView.html';
+        }
+  }
+
+    $("#register").click(()=>{
+        console.log("clicked");
+        let Email = $("#email").val();
+        let Password = $("#password").val();
+        let Data = {email : Email , password: Password};
+        console.log(Data);
+        $.ajax({
+            url : URL,
+            method : "POST",
+            data :JSON.stringify(Data),
+            contentType:'application/json',
+            dataType:'json',
+            success: ((data) =>{
+                console.log(data);
+                window.location = "http://127.0.0.1:5500/login.html";
+            }),
+            error : ((e)=>{
+                alert("Something  went wrong \n" + e.statusText , e);
+            })
+        });
+    })  ;
+
+
+</script>
+</html>

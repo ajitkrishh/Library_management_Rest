@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management System (student)</title>
+
+    <script src="utils/jquery.js"></script>
+    <link rel="stylesheet" href="utils/bootstrap.css">
+    <script src="utils/bootstrap.js"></script>
+
+</head>
+
+<body>
+    <div class="container m-5">
+
+        <div class="row">
+            <div class="col-sm-10">
+                <h2 class="text-center alert alert-danger">
+                    Library Management System
+                </h2>
+            </div>
+            <div class="col-sm-1">
+                <div class="text-center " style="margin-top: 50%;">
+                    <button class="btn btn-info" id="user"></button>
+                </div>
+            </div>
+            <div class="col-sm-1">
+                <div class="text-center " style="margin-top: 50%;">
+                    <button class="btn btn-danger" id="logout">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <h4 class="text-center alert alert-info">Available Book records</h4>
+            <div class="records">
+                <table class="table table-hover">
+                    <tr>
+                        <th>Id</th>
+                        <th>Name</th>
+                        <th>Author</th>
+                        <th>Discription</th>
+                    </tr>
+                    <tbody id="tbody">                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+<script>
+
+    const url = "http://127.0.0.1:5500/login.html";
+    const token = localStorage.getItem("token");
+    const type = localStorage.getItem("type");
+
+
+
+    $("#logout").click(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("type");
+        localStorage.removeItem("id");
+        window.location = url;
+    });
+    if (type === '2') {
+
+        $('#user').text("Student");
+    }else{
+        window.location = url;
+    }
+
+    $.ajax({
+        url: "http://127.0.0.1:8000/api/student/",
+        method: 'GET',
+        headers: {
+            "Content-Type": "application/json",
+        },
+        dataType: 'json',
+        success: ((data) => {
+            fillTable(data);           // function for populating the table
+        }),
+        error: ((e) => {
+            alert(e.statusText);
+        })
+    });
+    // function to populate the table body
+    function fillTable(data) {
+        let counter = 1;        
+        let str = ""
+        for (let i = 0; i < data.length; i++) {
+            str += '<tr> <td class="counter">' + counter + '</td>   <td>' + data[i].Name + "</td>    <td>" + data[i].Author + "</td> <td>" + data[i].Discription + "</td></tr>";
+            counter++;
+        }
+        $("#tbody").html(str);
+    }
+</script>
+
+</html>
